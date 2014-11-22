@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -17,19 +18,36 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+
 
 
 public class MainActivity extends Activity {
 
     public static final String EXTRA_MESSAGE = "message";
     public static final String PROPERTY_REG_ID = "registration_id";
+    public static final String PROPERTY_USER_ID = "user_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
     String SENDER_ID = "722462131301";
     static final String TAG = "ChaperOne";
+    String serverIp = "http://104.236.3.234/";
+
+    private GroupDbHelper dbHelper;
 
     TextView mDisplay;
     GoogleCloudMessaging gcm;
@@ -42,6 +60,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        context = getApplicationContext();
+
+
+        dbHelper = new GroupDbHelper(this);
 
         if (checkPlayServices()) {
             gcm = GoogleCloudMessaging.getInstance(this);
@@ -78,10 +101,32 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void register(){
+    public void register(View view){
 
         String id = ((EditText)findViewById(R.id.groupId)).getText().toString();
 
+        final SharedPreferences prefs = getGCMPreferences(context);
+        String userId = prefs.getString(PROPERTY_USER_ID, "");
+
+        // Create a new HttpClient and Post Header
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpPost httppost = new HttpPost(serverIp+"registerGroup.php");
+
+        try {
+            // Add your data
+            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+            nameValuePairs.add(new BasicNameValuePair("userId", userId));
+            nameValuePairs.add(new BasicNameValuePair("groupId", id));
+            httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+            // Execute HTTP Post Request
+            HttpResponse response = httpclient.execute(httppost);
+
+        } catch (ClientProtocolException e) {
+            // TODO Auto-generated catch block
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+        }
 
     }
 
@@ -173,7 +218,7 @@ public class MainActivity extends Activity {
 
             @Override
             protected void onPostExecute(String msg) {
-                mDisplay.append(msg + "\n");
+               // mDisplay.append(msg + "\n");
             }
         }.execute(null, null, null);
     }
@@ -181,6 +226,25 @@ public class MainActivity extends Activity {
     private void sendRegistrationIdToBackend() {
         // Your implementation here.
 
+
+        // Create a new HttpClient and Post Header
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpPost httppost = new HttpPost(serverIp+"registerGCM.php");
+
+        try {
+            // Add your data
+            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+            nameValuePairs.add(new BasicNameValuePair("regid", regid));
+            httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+            // Execute HTTP Post Request
+            HttpResponse response = httpclient.execute(httppost);
+
+        } catch (ClientProtocolException e) {
+            // TODO Auto-generated catch block
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+        }
     }
 
     private void storeRegistrationId(Context context, String regId) {

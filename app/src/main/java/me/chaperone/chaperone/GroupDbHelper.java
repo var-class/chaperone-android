@@ -10,14 +10,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class GroupDbHelper extends SQLiteOpenHelper {
 
     public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_NAME = "ChaperOneGroup.db";
+    public static final String DATABASE_NAME = "ChaperOne.db";
 
     public GroupDbHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     public void onCreate(SQLiteDatabase db){
-        db.execSQL("create table groups(groupId varchar(255) primary key);");
+        db.execSQL("create table groups(groupId int primary key);");
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
